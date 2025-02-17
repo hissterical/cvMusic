@@ -5,3 +5,4 @@ math
 pyaudio
 numpy
 matplotlib
+pyo
