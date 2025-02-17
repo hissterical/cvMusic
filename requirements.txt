@@ -1,1 +1,3 @@
 Python==3.10.16
+mediapipe
+opencv-python
