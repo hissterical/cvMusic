@@ -15,23 +15,24 @@ stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_
 
 # Set up Matplotlib figure
 fig, ax = plt.subplots()
-x = np.arange(0, CHUNK)  # Time axis
-line, = ax.plot(x, np.random.rand(CHUNK), '-', lw=1)
-ax.set_ylim(-5000, 5000)  # Adjust amplitude range
-ax.set_xlim(0, CHUNK)
-ax.set_title("Real-Time Audio Waveform")
-ax.set_xlabel("Samples")
-ax.set_ylabel("Amplitude")
+x = np.fft.rfftfreq(CHUNK, 1/RATE)  # Frequency axis
+line, = ax.plot(x, (np.zeros(len(x))), '-', lw=1)
+ax.set_xlim(20, RATE // 2)  # Human hearing range
+ax.set_ylim(0, 10000)  # Adjust based on signal strength
+ax.set_xscale("log")  # Log scale for better visualization
+ax.set_title("Real-Time Frequency Spectrum")
+ax.set_xlabel("Frequency (Hz)")
+ax.set_ylabel("Magnitude")
 
-# Function to update waveform dynamically
-def update_waveform(frame):
+# Function to update frequency spectrum
+def update_spectrum(frame):
     data = np.frombuffer(stream.read(CHUNK, exception_on_overflow=False), dtype=np.int16)
-    print(data)
-    line.set_ydata(data)
+    fft_result = np.abs(np.fft.rfft(data))/5  # Apply FFT and get magnitude
+    line.set_ydata(fft_result)
     return line,
 
 # Animate plot
-ani = animation.FuncAnimation(fig, update_waveform, interval=30, blit=True)
+ani = animation.FuncAnimation(fig, update_spectrum, interval=30, blit=True)
 plt.show()
 
 # Stop and close the stream when done
