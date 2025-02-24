@@ -143,19 +143,17 @@ while True:
 
     # --- Dynamically set spectrogram width based on mid_dist ---
     num_bins = len(fft_magnitude)
-    spectrogram_width = abs(mid2x - mid1x)  # Scale mid_dist to get pixel width. Adjust 10 as needed.
+    spectrogram_width = abs(mid2x - mid1x)  # Spectrogram width based on horizontal distance
     spectrogram_width = max(50, min(spectrogram_width, image.shape[1])) # Clamp width to be reasonable
     bin_width = spectrogram_width / num_bins # bin width based on dynamic spectrogram width
-    start_x = mid1x or 1
+    start_x = mid1x 
 
-    num_bins = len(fft_magnitude)
-    bin_width = image.shape[1] / num_bins
     for i, magnitude in enumerate(fft_magnitude):
         x = int(start_x + i * bin_width)
         bar_height = int(magnitude * 100)  # Adjust scaling factor as needed.
         cv2.rectangle(image,
-                      (x, mid1y), # Changed here to start from mid1y
-                      (x + int(bin_width), mid1y - bar_height), # Changed here to calculate top based on mid1y
+                      (x, mid1y), # Start vertical position at mid1y
+                      (x + int(bin_width), mid1y - bar_height),
                       (255, 0, 0), -1)
 
     cv2.imshow("Hand Tracker with Spectrum", image)
