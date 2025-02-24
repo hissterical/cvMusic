@@ -61,6 +61,8 @@ mphands = mp.solutions.hands
 cap = cv2.VideoCapture(0)
 hands = mphands.Hands()
 
+
+mid_dist=1
 while True:
     success, image = cap.read()
     if not success:
@@ -72,8 +74,21 @@ while True:
     results = hands.process(rgb_image)
 
     if results.multi_hand_landmarks and len(results.multi_hand_landmarks) == 2:
-        hand1 = results.multi_hand_landmarks[0]
-        hand2 = results.multi_hand_landmarks[1]
+        hand1 = None
+        hand2 = None
+        handedness_info = results.multi_handedness
+        hand_landmarks = results.multi_hand_landmarks
+
+        # Assign hand1 as left and hand2 as right
+        if handedness_info[0].classification[0].label == 'Left' and handedness_info[1].classification[0].label == 'Right':
+            hand1 = hand_landmarks[0]
+            hand2 = hand_landmarks[1]
+        elif handedness_info[0].classification[0].label == 'Right' and handedness_info[1].classification[0].label == 'Left':
+            hand1 = hand_landmarks[1]
+            hand2 = hand_landmarks[0]
+        else: # Fallback in case of unsure sorting (though should not happen often)
+            hand1 = hand_landmarks[0]
+            hand2 = hand_landmarks[1]
 
         thumb1 = hand1.landmark[mphands.HandLandmark.THUMB_TIP]
         index1 = hand1.landmark[mphands.HandLandmark.INDEX_FINGER_TIP]
