@@ -140,7 +140,8 @@ while True:
         # --- Dynamically set spectrogram along midpoint line ---
         num_bins = len(fft_magnitude)
         spectrogram_length = math.sqrt((mid2x - mid1x)**2 + (mid2y - mid1y)**2)
-        bin_width = spectrogram_length / num_bins
+        width_scale = 1.5  # Increase this (e.g., 1.5, 2.0) for wider bars
+        bin_width = (spectrogram_length / num_bins) * width_scale        
         start_point = np.array([mid1x, mid1y])
         end_point = np.array([mid2x, mid2y])
         line_direction_vector = end_point - start_point
@@ -148,8 +149,14 @@ while True:
         perp_unit_vector = np.array([-line_direction_unit_vector[1], line_direction_unit_vector[0]])
 
         for i, magnitude in enumerate(fft_magnitude):
-            bar_height = int(magnitude * 50) # Reduced scaling for height, adjust as needed
-            center_point = start_point + (i + 0.5) * bin_width * line_direction_unit_vector
+            amplitude_scale = 100
+            #bar_height = int(magnitude * amplitude_scale) # Reduced scaling for height, adjust as needed
+            max_magnitude = np.max(fft_magnitude) if np.max(fft_magnitude) > 0 else 1
+            bar_height = int((magnitude / max_magnitude) * amplitude_scale)
+
+            spacing = 1.2
+            center_point = start_point + (i * spacing + 0.5) * bin_width * line_direction_unit_vector  #ATTENTION OPTION
+            #center_point = start_point + (i + 0.5) * bin_width * line_direction_unit_vector
             half_width_vec = (bin_width / 2) * line_direction_unit_vector
             half_height_vec = (bar_height / 2) * perp_unit_vector
 
