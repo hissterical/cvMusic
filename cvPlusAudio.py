@@ -63,6 +63,9 @@ hands = mphands.Hands()
 
 
 mid_dist=1
+mid1x=1
+mid2x=1
+mid1y=1
 while True:
     success, image = cap.read()
     if not success:
@@ -138,14 +141,21 @@ while True:
     max_val = np.max(fft_magnitude) if np.max(fft_magnitude) != 0 else 1
     fft_magnitude = fft_magnitude / max_val
 
+    # --- Dynamically set spectrogram width based on mid_dist ---
+    num_bins = len(fft_magnitude)
+    spectrogram_width = abs(mid2x - mid1x)  # Scale mid_dist to get pixel width. Adjust 10 as needed.
+    spectrogram_width = max(50, min(spectrogram_width, image.shape[1])) # Clamp width to be reasonable
+    bin_width = spectrogram_width / num_bins # bin width based on dynamic spectrogram width
+    start_x = mid1x or 1
+
     num_bins = len(fft_magnitude)
     bin_width = image.shape[1] / num_bins
     for i, magnitude in enumerate(fft_magnitude):
-        x = int(i * bin_width)
+        x = int(start_x + i * bin_width)
         bar_height = int(magnitude * 100)  # Adjust scaling factor as needed.
         cv2.rectangle(image,
-                      (x, image.shape[0]),
-                      (x + int(bin_width), image.shape[0] - bar_height),
+                      (x, mid1y), # Changed here to start from mid1y
+                      (x + int(bin_width), mid1y - bar_height), # Changed here to calculate top based on mid1y
                       (255, 0, 0), -1)
 
     cv2.imshow("Hand Tracker with Spectrum", image)
