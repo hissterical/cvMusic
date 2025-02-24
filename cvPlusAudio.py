@@ -134,28 +134,34 @@ while True:
         samples = table.getBuffer()
         fft_result = np.fft.rfft(samples)
         fft_magnitude = np.abs(fft_result)
-        max_val = np.max(fft_magnitude) if np.max(fft_magnitude) != 0 else 1
-        fft_magnitude = fft_magnitude / max_val
+        #max_val = np.max(fft_magnitude) if np.max(fft_magnitude) != 0 else 1
+        fft_magnitude = fft_magnitude #/ max_val
 
         # --- Dynamically set spectrogram along midpoint line ---
         num_bins = len(fft_magnitude)
         spectrogram_length = math.sqrt((mid2x - mid1x)**2 + (mid2y - mid1y)**2)
         width_scale = 1.5  # Increase this (e.g., 1.5, 2.0) for wider bars
-        bin_width = (spectrogram_length / num_bins) * width_scale        
+        bin_width = (spectrogram_length / num_bins) * width_scale
         start_point = np.array([mid1x, mid1y])
         end_point = np.array([mid2x, mid2y])
         line_direction_vector = end_point - start_point
         line_direction_unit_vector = line_direction_vector / np.linalg.norm(line_direction_vector) if np.linalg.norm(line_direction_vector) != 0 else np.array([1, 0]) # Handle case where mid1 and mid2 are the same
         perp_unit_vector = np.array([-line_direction_unit_vector[1], line_direction_unit_vector[0]])
 
+        total_drawn_width = (num_bins - 1) * 1.2 * bin_width + bin_width  # total width covered by centers
+        offset = (spectrogram_length - total_drawn_width) / 2
+        adjusted_start = start_point + offset * line_direction_unit_vector
+        # Use adjusted_start in place of start_point for drawing
+
+
         for i, magnitude in enumerate(fft_magnitude):
-            amplitude_scale = 100
+            amplitude_scale = 5
             #bar_height = int(magnitude * amplitude_scale) # Reduced scaling for height, adjust as needed
-            max_magnitude = np.max(fft_magnitude) if np.max(fft_magnitude) > 0 else 1
-            bar_height = int((magnitude / max_magnitude) * amplitude_scale)
+            #max_magnitude = np.max(fft_magnitude) if np.max(fft_magnitude) > 0 else 1
+            bar_height = int((magnitude * amplitude_scale)) # / max_magnitude) * amplitude_scale)
 
             spacing = 1.2
-            center_point = start_point + (i * spacing + 0.5) * bin_width * line_direction_unit_vector  #ATTENTION OPTION
+            center_point = adjusted_start + (i * spacing + 0.5) * bin_width * line_direction_unit_vector  #ATTENTION OPTION
             #center_point = start_point + (i + 0.5) * bin_width * line_direction_unit_vector
             half_width_vec = (bin_width / 2) * line_direction_unit_vector
             half_height_vec = (bar_height / 2) * perp_unit_vector
