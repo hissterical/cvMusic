@@ -62,10 +62,6 @@ cap = cv2.VideoCapture(0)
 hands = mphands.Hands()
 
 
-mid_dist=1
-mid1x=1
-mid2x=1
-mid1y=1
 while True:
     success, image = cap.read()
     if not success:
@@ -134,27 +130,41 @@ while True:
         cv2.putText(image, f"{int(mid_dist)}", ((mid1x + mid2x) // 2, (mid1y + mid2y) // 2),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
-    # --- Audio Spectrum Analysis ---
-    samples = table.getBuffer()
-    fft_result = np.fft.rfft(samples)
-    fft_magnitude = np.abs(fft_result)
-    max_val = np.max(fft_magnitude) if np.max(fft_magnitude) != 0 else 1
-    fft_magnitude = fft_magnitude / max_val
+        # --- Audio Spectrum Analysis ---
+        samples = table.getBuffer()
+        fft_result = np.fft.rfft(samples)
+        fft_magnitude = np.abs(fft_result)
+        max_val = np.max(fft_magnitude) if np.max(fft_magnitude) != 0 else 1
+        fft_magnitude = fft_magnitude / max_val
 
-    # --- Dynamically set spectrogram width based on mid_dist ---
-    num_bins = len(fft_magnitude)
-    spectrogram_width = abs(mid2x - mid1x)  # Spectrogram width based on horizontal distance
-    spectrogram_width = max(50, min(spectrogram_width, image.shape[1])) # Clamp width to be reasonable
-    bin_width = spectrogram_width / num_bins # bin width based on dynamic spectrogram width
-    start_x = mid1x 
+        # --- Dynamically set spectrogram along midpoint line ---
+        num_bins = len(fft_magnitude)
+        spectrogram_length = math.sqrt((mid2x - mid1x)**2 + (mid2y - mid1y)**2)
+        bin_width = spectrogram_length / num_bins
+        start_point = np.array([mid1x, mid1y])
+        end_point = np.array([mid2x, mid2y])
+        line_direction_vector = end_point - start_point
+        line_direction_unit_vector = line_direction_vector / np.linalg.norm(line_direction_vector) if np.linalg.norm(line_direction_vector) != 0 else np.array([1, 0]) # Handle case where mid1 and mid2 are the same
+        perp_unit_vector = np.array([-line_direction_unit_vector[1], line_direction_unit_vector[0]])
 
-    for i, magnitude in enumerate(fft_magnitude):
-        x = int(start_x + i * bin_width)
-        bar_height = int(magnitude * 100)  # Adjust scaling factor as needed.
-        cv2.rectangle(image,
-                      (x, mid1y), # Start vertical position at mid1y
-                      (x + int(bin_width), mid1y - bar_height),
-                      (255, 0, 0), -1)
+        for i, magnitude in enumerate(fft_magnitude):
+            bar_height = int(magnitude * 50) # Reduced scaling for height, adjust as needed
+            center_point = start_point + (i + 0.5) * bin_width * line_direction_unit_vector
+            half_width_vec = (bin_width / 2) * line_direction_unit_vector
+            half_height_vec = (bar_height / 2) * perp_unit_vector
+
+            # Calculate vertices for the rotated rectangle
+            v1 = center_point - half_width_vec - half_height_vec # bottom-left
+            v2 = center_point + half_width_vec - half_height_vec # bottom-right
+            v3 = center_point + half_width_vec + half_height_vec # top-right
+            v4 = center_point - half_width_vec + half_height_vec # top-left
+            vertices = np.array([v1, v2, v3, v4], dtype=np.int32)
+
+            if vertices.size > 0:
+                cv2.fillPoly(image, [vertices], color=(255, 0, 0))
+            else:
+                print("Warning: vertices array is empty, skipping fillPoly drawing.")
+
 
     cv2.imshow("Hand Tracker with Spectrum", image)
     if cv2.waitKey(1) & 0xFF == ord('q'):
