@@ -8,8 +8,9 @@ import numpy as np
 s = Server().boot()
 s.start()
 
-sf = SfPlayer("heads.wav", speed=1, loop=True, mul=0.5)
-harm = Harmonizer(sf, transpo=0).out()
+sf = SfPlayer("franchise.mp3", speed=1, loop=True, mul=0.5)
+# harm = Harmonizer(sf, transpo=0).out()
+
 freq_shift = FreqShift(sf, shift=0).out()
 
 def set_volume(volume: float):
@@ -19,10 +20,13 @@ def set_speed(speed: float):
     sf.speed = max(0.1, speed)
 
 def set_pitch(semitones: float):
-    harm.transpo = semitones
+    harm.transpo = float(semitones)
+
+# def set_frequency_shift(shift_hz: float):
+#     freq_shift.shift = shift_hz
 
 def set_frequency_shift(shift_hz: float):
-    freq_shift.shift = shift_hz
+    freq_shift.shift = float(shift_hz)
 
 # A helper class to smooth out rapid changes.
 class SmoothValue:
@@ -115,6 +119,7 @@ while True:
         cv2.line(image, (mid1x, mid1y), (mid2x, mid2y), (255, 255, 0), 2)
 
         dist1 = math.sqrt((thumb1x - index1x)**2 + (thumb1y - index1y)**2) / 10
+        dist2 = math.sqrt((thumb2x - index2x)**2 + (thumb2y - index2y)**2) / 10
         mid_dist = math.sqrt((mid2x - mid1x)**2 + (mid2y - mid1y)**2) / 10
 
         raw_volume = dist1 / 18
@@ -125,7 +130,18 @@ while True:
         smoothed_speed = speed_smoother.update(raw_speed)
         set_speed(max(0.5, min(smoothed_speed, 2.0)))
 
+        # --- Frequency Shift Control from Right Hand ---
+        # Define minimum and maximum distance (calibration values)
+        min_dist2 = 0   # Adjust based on your gesture range
+        max_dist2 = 23   # Adjust based on your gesture range
+
+        # Map dist2 (gesture measurement) to a frequency shift range: -500 Hz to 500 Hz
+        raw_freq_shift = np.interp(dist2, [min_dist2, max_dist2], [-500, 500])
+        #set_frequency_shift(raw_freq_shift)
+
         cv2.putText(image, f"{int(dist1)}", ((thumb1x + index1x) // 2, (thumb1y + index1y) // 2),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+        cv2.putText(image, f"{int(dist2)}", ((thumb2x + index2x) // 2, (thumb2y + index2y) // 2),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
         cv2.putText(image, f"{int(mid_dist)}", ((mid1x + mid2x) // 2, (mid1y + mid2y) // 2),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
