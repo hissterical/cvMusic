@@ -137,7 +137,7 @@ while True:
 
         # Map dist2 (gesture measurement) to a frequency shift range: -500 Hz to 500 Hz
         raw_freq_shift = np.interp(dist2, [min_dist2, max_dist2], [-500, 500])
-        #set_frequency_shift(raw_freq_shift)
+        set_frequency_shift(raw_freq_shift)
 
         cv2.putText(image, f"{int(dist1)}", ((thumb1x + index1x) // 2, (thumb1y + index1y) // 2),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
