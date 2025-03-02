@@ -28,6 +28,21 @@ def set_pitch(semitones: float):
 def set_frequency_shift(shift_hz: float):
     freq_shift.shift = float(shift_hz)
 
+# ▶ Play Audio (if stopped)
+def play():
+    sf.out()
+
+
+# ⏸ Pause Audio
+def pause():
+    sf.stop()
+
+
+# 🛑 Stop Audio
+def stop():
+    sf.stop()
+    sf.pos = 0  # Reset position
+
 # A helper class to smooth out rapid changes.
 class SmoothValue:
     def __init__(self, alpha=0.1):
@@ -65,7 +80,7 @@ mphands = mp.solutions.hands
 cap = cv2.VideoCapture(0)
 hands = mphands.Hands()
 
-
+isPlaying = True
 while True:
     success, image = cap.read()
     if not success:
@@ -77,6 +92,9 @@ while True:
     results = hands.process(rgb_image)
 
     if results.multi_hand_landmarks and len(results.multi_hand_landmarks) == 2:
+        if isPlaying == False:
+            play()
+            isPlaying = True
         hand1 = None
         hand2 = None
         handedness_info = results.multi_handedness
@@ -137,7 +155,7 @@ while True:
 
         # Map dist2 (gesture measurement) to a frequency shift range: -500 Hz to 500 Hz
         raw_freq_shift = np.interp(dist2, [min_dist2, max_dist2], [-500, 500])
-        set_frequency_shift(raw_freq_shift)
+        #set_frequency_shift(raw_freq_shift)
 
         cv2.putText(image, f"{int(dist1)}", ((thumb1x + index1x) // 2, (thumb1y + index1y) // 2),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
@@ -193,6 +211,10 @@ while True:
                 cv2.fillPoly(image, [vertices], color=(255, 0, 0))
             else:
                 print("Warning: vertices array is empty, skipping fillPoly drawing.")
+    else: 
+        if isPlaying == True:
+            stop()
+            isPlaying = False
 
 
     cv2.imshow("Hand Tracker with Spectrum", image)
